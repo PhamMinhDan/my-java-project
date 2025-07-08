@@ -17,6 +17,8 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
+      - name: Run Tests
+        run: mvn clean test
       - name: Verify with Maven
         run: mvn clean verify -DskipTests
       - name: Build with Maven
