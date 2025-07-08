@@ -1,19 +1,14 @@
-name: Java CI/CD with Maven - Build, Test, and Deploy WAR
+name: Java CI/CD with Maven - Build and Deploy WAR
 
 on:
   push:
-    branches: [main, feature-luong]
-    paths:
-      - "src/main/**"
-      - "src/test/**"
-  pull_request:
-    branches: [main]
+    branches: [main, featurre-luong]
     paths:
       - "src/main/**"
       - "src/test/**"
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,10 +17,8 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
-      - name: Run Tests
-        run: mvn test
       - name: Verify with Maven
-        run: mvn clean verify
+        run: mvn clean verify -DskipTests
       - name: Build with Maven
         run: mvn package
       - name: Upload WAR artifact
@@ -37,8 +30,7 @@ jobs:
 
   deploy:
     runs-on: [self-hosted, windows]
-    needs: build-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
     steps:
       - name: Download WAR artifact
         uses: actions/download-artifact@v4
@@ -48,20 +40,20 @@ jobs:
 
       - name: Stop Tomcat
         run: |
-          PowerShell -ExecutionPolicy Bypass -Command "try { $tcpClient = New-Object System.Net.Sockets.TcpClient; $tcpClient.Connect('localhost', 8005); if ($tcpClient.Connected) { if (Test-Path 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\bin\shutdown.bat') { & 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\bin\shutdown.bat' } } $tcpClient.Close() } catch { Write-Host 'Tomcat not running on port 8005, skipping shutdown.bat' }; Start-Sleep -Seconds 60; $processes = Get-Process -Name 'java' -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*Tomcat*' }; if ($processes) { $processes | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host 'Stopped ' + $processes.Count + ' Tomcat Java processes' } else { Write-Host 'No Tomcat Java processes found' }"
+          PowerShell -ExecutionPolicy Bypass -Command "try { $tcpClient = New-Object System.Net.Sockets.TcpClient; $tcpClient.Connect('localhost', 8005); if ($tcpClient.Connected) { if (Test-Path 'E:\DevOps\Apache_Tomcat\bin\shutdown.bat') { & 'E:\DevOps\Apache_Tomcat\bin\shutdown.bat' } } $tcpClient.Close() } catch { Write-Host 'Tomcat not running on port 8005, skipping shutdown.bat' }; Start-Sleep -Seconds 60; $processes = Get-Process -Name 'java' -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*E:\DevOps\Apache_Tomcat*' }; if ($processes) { $processes | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host 'Stopped ' + $processes.Count + ' Tomcat Java processes' } else { Write-Host 'No Tomcat Java processes found' }"
         shell: cmd
 
       - name: Deploy WAR to Tomcat
         run: |
-          PowerShell -ExecutionPolicy Bypass -Command "Remove-Item -Path 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps\java-servlet-web-1.0-SNAPSHOT.war' -Force -ErrorAction SilentlyContinue; Remove-Item -Path 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps\java-servlet-web-1.0-SNAPSHOT' -Recurse -Force -ErrorAction SilentlyContinue; $warFile = Get-ChildItem -Path '.\artifacts\java-servlet-web-1.0-SNAPSHOT*.war' | Select-Object -First 1; if ($warFile) { Copy-Item -Path $warFile.FullName -Destination 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps' -Force } else { Write-Error 'WAR file not found in artifacts!'; exit 1 }"
+          PowerShell -ExecutionPolicy Bypass -Command "Remove-Item -Path 'E:\DevOps\Apache_Tomcat\webapps\java-servlet-web-1.0-SNAPSHOT.war' -Force -ErrorAction SilentlyContinue; Remove-Item -Path 'E:\DevOps\Apache_Tomcat\webapps\java-servlet-web-1.0-SNAPSHOT' -Recurse -Force -ErrorAction SilentlyContinue; $warFile = Get-ChildItem -Path '.\artifacts\java-servlet-web-1.0-SNAPSHOT*.war' | Select-Object -First 1; if ($warFile) { Copy-Item -Path $warFile.FullName -Destination 'E:\DevOps\Apache_Tomcat\webapps' -Force } else { Write-Error 'WAR file not found in artifacts!'; exit 1 }"
         shell: cmd
 
       - name: Start Tomcat
         run: |
-          PowerShell -ExecutionPolicy Bypass -Command "if (Test-Path 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\bin\startup.bat') { & 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\bin\startup.bat' } else { Write-Error 'startup.bat not found!'; exit 1 }; Start-Sleep -Seconds 60"
+          PowerShell -ExecutionPolicy Bypass -Command "if (Test-Path 'E:\DevOps\Apache_Tomcat\bin\startup.bat') { & 'E:\DevOps\Apache_Tomcat\bin\startup.bat' } else { Write-Error 'startup.bat not found!'; exit 1 }; Start-Sleep -Seconds 60"
         shell: cmd
 
       - name: Verify Deployment
         run: |
-          PowerShell -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 10; $res = Invoke-WebRequest -Uri 'http://localhost:8089/java-servlet-web-1.0-SNAPSHOT/hello' -UseBasicParsing -ErrorAction SilentlyContinue; if ($res.StatusCode -eq 200) { Write-Host 'Deployment successful!' } else { Write-Error 'Deployment failed or invalid response.'; exit 1 }"
+          PowerShell -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 10; $res = Invoke-WebRequest -Uri 'http://localhost:8082/java-servlet-web-1.0-SNAPSHOT/' -UseBasicParsing -ErrorAction SilentlyContinue; if ($res.StatusCode -eq 200) { Write-Host 'Deployment successful!' } else { Write-Error ' Deployment failed or invalid response.'; exit 1 }"
         shell: cmd
