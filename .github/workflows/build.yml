@@ -1,8 +1,13 @@
-name: Java CI/CD with Maven - Build and Deploy WAR
+name: Java CI/CD with Maven - Build, Test, and Deploy WAR
 
 on:
   push:
-    branches: [main, featurre-luong]
+    branches: [main, feature-luong]
+    paths:
+      - "src/main/**"
+      - "src/test/**"
+  pull_request:
+    branches: [main]
     paths:
       - "src/main/**"
       - "src/test/**"
