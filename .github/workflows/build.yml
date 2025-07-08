@@ -41,7 +41,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Download WAR artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4  # Cập nhật từ v3 thành v4
         with:
           name: servlet-war
           path: ./artifacts
