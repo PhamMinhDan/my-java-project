@@ -41,7 +41,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Download WAR artifact
-        uses: actions/download-artifact@v4  # Cập nhật từ v3 thành v4
+        uses: actions/download-artifact@v4
         with:
           name: servlet-war
           path: ./artifacts
@@ -53,7 +53,7 @@ jobs:
 
       - name: Deploy WAR to Tomcat
         run: |
-          PowerShell -ExecutionPolicy Bypass -Command "Remove-Item -Path 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps\my-java-project-1.0-SNAPSHOT.war' -Force -ErrorAction SilentlyContinue; Remove-Item -Path 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps\my-java-project-1.0-SNAPSHOT' -Recurse -Force -ErrorAction SilentlyContinue; $warFile = Get-ChildItem -Path '.\artifacts\my-java-project-1.0-SNAPSHOT*.war' | Select-Object -First 1; if ($warFile) { Copy-Item -Path $warFile.FullName -Destination 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps' -Force } else { Write-Error 'WAR file not found in artifacts!'; exit 1 }"
+          PowerShell -ExecutionPolicy Bypass -Command "Remove-Item -Path 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps\java-servlet-web-1.0-SNAPSHOT.war' -Force -ErrorAction SilentlyContinue; Remove-Item -Path 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps\java-servlet-web-1.0-SNAPSHOT' -Recurse -Force -ErrorAction SilentlyContinue; $warFile = Get-ChildItem -Path '.\artifacts\java-servlet-web-1.0-SNAPSHOT*.war' | Select-Object -First 1; if ($warFile) { Copy-Item -Path $warFile.FullName -Destination 'C:\Program Files\Apache Software Foundation\Tomcat 11.0\webapps' -Force } else { Write-Error 'WAR file not found in artifacts!'; exit 1 }"
         shell: cmd
 
       - name: Start Tomcat
@@ -63,5 +63,5 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          PowerShell -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 10; $res = Invoke-WebRequest -Uri 'http://localhost:8089/my-java-project-1.0-SNAPSHOT/hello' -UseBasicParsing -ErrorAction SilentlyContinue; if ($res.StatusCode -eq 200) { Write-Host 'Deployment successful!' } else { Write-Error 'Deployment failed or invalid response.'; exit 1 }"
+          PowerShell -ExecutionPolicy Bypass -Command "Start-Sleep -Seconds 10; $res = Invoke-WebRequest -Uri 'http://localhost:8089/java-servlet-web-1.0-SNAPSHOT/hello' -UseBasicParsing -ErrorAction SilentlyContinue; if ($res.StatusCode -eq 200) { Write-Host 'Deployment successful!' } else { Write-Error 'Deployment failed or invalid response.'; exit 1 }"
         shell: cmd
